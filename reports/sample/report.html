@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM Data Health Audit — Sample D2C Brand</title>
+<style>
+  :root {
+    --bg:#f6f5f1; --paper:#ffffff; --ink:#1c1f24; --muted:#6b7079; --line:#e4e2dc;
+    --ok:#1f8a5b; --fair:#6a9a2b; --warn:#c7801a; --bad:#c2412d; --na:#9aa0a6; --accent:#24486b;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:15px/1.55 "Inter", "Segoe UI", system-ui, -apple-system, sans-serif; }
+  .page { max-width:960px; margin:0 auto; padding:40px 16px 64px; }
+  header.top { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;
+               border-bottom:2px solid var(--ink); padding-bottom:14px; margin-bottom:28px; }
+  .eyebrow { text-transform:uppercase; letter-spacing:.12em; font-size:12px; color:var(--muted); margin:0 0 4px; }
+  h1 { font-family:Georgia, "Times New Roman", serif; font-weight:600; font-size:34px; margin:0; letter-spacing:-.01em; }
+  .meta { color:var(--muted); font-size:13px; text-align:right; }
+  h2 { font-family:Georgia, serif; font-weight:600; font-size:22px; margin:44px 0 6px; }
+  .lede { color:var(--muted); margin:0 0 18px; max-width:68ch; }
+  .card { background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:22px; }
+  .hero { display:grid; grid-template-columns:auto 1fr; gap:28px; align-items:center; }
+  .ring-track { fill:none; stroke:var(--line); stroke-width:14; }
+  .ring-value { fill:none; stroke-width:14; stroke-linecap:round; }
+  .ring.tone-ok .ring-value { stroke:var(--ok); } .ring.tone-fair .ring-value { stroke:var(--fair); }
+  .ring.tone-warn .ring-value { stroke:var(--warn); } .ring.tone-bad .ring-value { stroke:var(--bad); }
+  .ring-num { font:600 44px Georgia, serif; text-anchor:middle; fill:var(--ink); }
+  .ring-sub { font-size:12px; text-anchor:middle; fill:var(--muted); }
+  .verdict { font-family:Georgia, serif; font-size:26px; margin:0 0 4px; }
+  .verdict-sub { color:var(--muted); margin:0 0 16px; }
+  .kpis { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+  .kpi { border-top:1px solid var(--line); padding-top:10px; }
+  .kpi b { display:block; font-size:22px; font-variant-numeric:tabular-nums; }
+  .kpi span { font-size:12.5px; color:var(--muted); }
+  .dims { display:grid; grid-template-columns:repeat(2, 1fr); gap:14px 28px; }
+  .dim-head { display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px; }
+  .dim-score { font-weight:600; font-variant-numeric:tabular-nums; }
+  .bar { height:8px; background:var(--line); border-radius:99px; overflow:hidden; }
+  .fill { height:100%; border-radius:99px; }
+  .fill.tone-ok { background:var(--ok); } .fill.tone-fair { background:var(--fair); }
+  .fill.tone-warn { background:var(--warn); } .fill.tone-bad { background:var(--bad); }
+  .tone-ok { color:var(--ok); } .tone-fair { color:var(--fair); } .tone-warn { color:var(--warn); }
+  .tone-bad { color:var(--bad); } .tone-na { color:var(--na); }
+  .issue { display:grid; grid-template-columns:36px 1fr; gap:14px; padding:18px 0; border-top:1px solid var(--line); }
+  .issue:first-child { border-top:0; padding-top:0; }
+  .issue-rank { width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff;
+                display:grid; place-items:center; font-weight:600; }
+  .issue-top { display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap; }
+  .issue h3, .uc h3 { margin:0; font-size:16.5px; }
+  .gain { font-size:13px; font-weight:600; color:var(--ok); background:#e8f4ee; padding:2px 10px; border-radius:99px; white-space:nowrap; }
+  .issue-meta { color:var(--muted); font-size:13px; margin:2px 0 8px; }
+  .impact { margin:0 0 6px; } .fix { margin:0; color:#33373d; }
+  .unlocks { margin-top:8px; font-size:13px; color:var(--accent); }
+  .ucs { display:grid; gap:14px; }
+  .uc-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+  .q { margin:2px 0 0; color:var(--muted); font-size:13.5px; }
+  .pill { font-size:12.5px; font-weight:600; padding:4px 12px; border-radius:99px; white-space:nowrap; }
+  .v-ok { background:#e8f4ee; color:var(--ok); } .v-warn { background:#fbf0de; color:#9a5f0c; }
+  .v-bad { background:#f9e5e1; color:var(--bad); } .v-na { background:#eee; color:var(--na); }
+  .reqs { list-style:none; padding:0; margin:14px 0 0; display:grid; gap:8px; }
+  .req { display:grid; grid-template-columns:22px 1fr; gap:10px; font-size:13.5px; }
+  .req b { display:block; font-weight:600; } .req span { color:#4a4f57; }
+  .ico { width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:11px; font-weight:700; color:#fff; margin-top:1px; }
+  .st-pass .ico { background:var(--ok); } .st-warn .ico { background:var(--warn); } .st-fail .ico { background:var(--bad); }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; }
+  td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  tr.muted td { color:var(--na); }
+  .chip { font-weight:600; }
+  .method { font-size:13.5px; color:#4a4f57; }
+  .method code { background:#f0eee8; padding:1px 5px; border-radius:4px; }
+  footer { margin-top:40px; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; }
+  @media (max-width:640px) {
+    .hero { grid-template-columns:1fr; justify-items:center; text-align:center; }
+    .kpis { grid-template-columns:1fr; } .dims { grid-template-columns:1fr; }
+    .meta { text-align:left; } h1 { font-size:28px; }
+    table { font-size:12.5px; } th:nth-child(1), td:nth-child(1) { display:none; }
+  }
+  @media print { body { background:#fff; } .card { break-inside:avoid; } .page { padding-top:0; } }
+</style></head>
+<body><div class="page">
+
+<header class="top">
+  <div><p class="eyebrow">CRM Data Health &amp; AI-Readiness Audit</p><h1>Sample D2C Brand</h1></div>
+  <div class="meta">Audit date 01 Oct 2026<br>1,320 contacts · 1,500 deals</div>
+</header>
+
+<section class="card hero">
+  
+    <svg class="ring tone-fair" viewBox="0 0 168 168" width="168" height="168" role="img"
+         aria-label="Health score 75 out of 100">
+      <circle cx="84" cy="84" r="70" class="ring-track"/>
+      <circle cx="84" cy="84" r="70" class="ring-value" stroke-dasharray="328.5 439.8"
+              transform="rotate(-90 84 84)"/>
+      <text x="84" y="86" class="ring-num">75</text>
+      <text x="84" y="112" class="ring-sub">out of 100</text>
+    </svg>
+  <div>
+    <p class="verdict tone-fair">Fair</p>
+    <p class="verdict-sub">Usable, but specific gaps will undermine reporting and AI.</p>
+    <div class="kpis">
+      <div class="kpi"><b>1,496</b><span>of 2,820 records have at least one issue</span></div>
+      <div class="kpi"><b>+14 pts</b><span>available by fixing the top 5 issues</span></div>
+      <div class="kpi"><b>0 of 5</b><span>AI use cases ready now (4 almost ready)</span></div>
+    </div>
+  </div>
+</section>
+
+<h2>Score by dimension</h2>
+<p class="lede">Each dimension is the weighted average of its checks. A check scores 0 once its failure rate reaches the tolerance set for that problem.</p>
+<section class="card dims"><div class="dim">
+              <div class="dim-head"><span>Completeness</span>
+                <span class="dim-score tone-fair">84</span></div>
+              <div class="bar"><div class="fill tone-fair" style="width:84.2%"></div></div>
+            </div><div class="dim">
+              <div class="dim-head"><span>Uniqueness</span>
+                <span class="dim-score tone-fair">78</span></div>
+              <div class="bar"><div class="fill tone-fair" style="width:78.2%"></div></div>
+            </div><div class="dim">
+              <div class="dim-head"><span>Validity</span>
+                <span class="dim-score tone-fair">81</span></div>
+              <div class="bar"><div class="fill tone-fair" style="width:81.4%"></div></div>
+            </div><div class="dim">
+              <div class="dim-head"><span>Consistency</span>
+                <span class="dim-score tone-fair">79</span></div>
+              <div class="bar"><div class="fill tone-fair" style="width:79.5%"></div></div>
+            </div><div class="dim">
+              <div class="dim-head"><span>Freshness</span>
+                <span class="dim-score tone-bad">45</span></div>
+              <div class="bar"><div class="fill tone-bad" style="width:45.4%"></div></div>
+            </div><div class="dim">
+              <div class="dim-head"><span>Integrity</span>
+                <span class="dim-score tone-fair">70</span></div>
+              <div class="bar"><div class="fill tone-fair" style="width:70.5%"></div></div>
+            </div></section>
+
+<h2>Top 5 problems, ranked by impact</h2>
+<p class="lede">Ranked by how many points each problem costs the overall score — i.e. what fixing it first would recover.</p>
+<section class="card">
+        <div class="issue">
+          <div class="issue-rank">1</div>
+          <div class="issue-body">
+            <div class="issue-top">
+              <h3>Open deals past their close date</h3>
+              <span class="gain">+5.1 pts if fixed</span>
+            </div>
+            <div class="issue-meta">241 of 505 records · 47.7% · Freshness</div>
+            <p class="impact">241 open deals (₹6.02 Cr) have already passed their close date — the pipeline and forecast are overstated until these are updated or closed out.</p>
+            <p class="fix"><b>Fix:</b> Weekly pipeline review: every past-due deal gets a new date or is marked Closed Lost.</p>
+            <div class="unlocks">Unblocks: Sales forecasting</div>
+          </div>
+        </div>
+        <div class="issue">
+          <div class="issue-rank">2</div>
+          <div class="issue-body">
+            <div class="issue-top">
+              <h3>Duplicate contacts</h3>
+              <span class="gain">+4.4 pts if fixed</span>
+            </div>
+            <div class="issue-meta">120 of 1,320 records · 9.1% · Uniqueness</div>
+            <p class="impact">120 redundant records across 120 people — reps may contact the same person twice and contact counts are inflated by 10%.</p>
+            <p class="fix"><b>Fix:</b> Merge clusters, keeping the oldest record; add duplicate-blocking on email and phone at entry.</p>
+            <div class="unlocks">Unblocks: Churn prediction, AI sales assistant</div>
+          </div>
+        </div>
+        <div class="issue">
+          <div class="issue-rank">3</div>
+          <div class="issue-body">
+            <div class="issue-top">
+              <h3>No logged activity in 6+ months</h3>
+              <span class="gain">+2.4 pts if fixed</span>
+            </div>
+            <div class="issue-meta">598 of 1,320 records · 45.3% · Freshness</div>
+            <p class="impact">598 contacts show no logged call/email/meeting in 6 months (458 have none at all) — either they&#x27;re neglected, or activity isn&#x27;t being logged.</p>
+            <p class="fix"><b>Fix:</b> Auto-log email and calendar activity via the CRM&#x27;s inbox integration instead of relying on manual entry.</p>
+            <div class="unlocks">Unblocks: Churn prediction, AI sales assistant</div>
+          </div>
+        </div>
+        <div class="issue">
+          <div class="issue-rank">4</div>
+          <div class="issue-body">
+            <div class="issue-top">
+              <h3>Won deals with no valid amount</h3>
+              <span class="gain">+1.4 pts if fixed</span>
+            </div>
+            <div class="issue-meta">58 of 922 records · 6.3% · Integrity</div>
+            <p class="impact">58 won deals carry no revenue, so booked revenue is under-reported.</p>
+            <p class="fix"><b>Fix:</b> Require an amount before a deal can move to Closed Won.</p>
+            <div class="unlocks">Unblocks: Customer lifetime value</div>
+          </div>
+        </div>
+        <div class="issue">
+          <div class="issue-rank">5</div>
+          <div class="issue-body">
+            <div class="issue-top">
+              <h3>Badly formatted emails</h3>
+              <span class="gain">+1.2 pts if fixed</span>
+            </div>
+            <div class="issue-meta">50 of 1,254 records · 4.0% · Validity</div>
+            <p class="impact">50 emails will bounce and hurt sender reputation.</p>
+            <p class="fix"><b>Fix:</b> Validate email format on entry; fix obvious typos (&#x27;,in&#x27;, &#x27;@@&#x27;); verify the rest with an email checker.</p>
+            <div class="unlocks">Unblocks: AI sales assistant</div>
+          </div>
+        </div></section>
+
+<h2>AI-readiness</h2>
+<p class="lede">Clean data isn't automatically ML-ready data. Each AI use case has its own requirements for volume, label balance, history and leakage.</p>
+<section class="ucs">
+        <div class="uc card">
+          <div class="uc-head">
+            <div><h3>Lead &amp; deal scoring</h3><p class="q">Which open deals are most likely to close?</p></div>
+            <span class="pill v-warn">Almost ready</span>
+          </div>
+          <ul class="reqs"><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Enough closed deals to learn from</b><span>995 closed deals (922 won / 73 lost). Aim for 300+.</span></div></li><li class="req st-warn"><span class="ico">!</span>
+                 <div><b>Both outcomes well represented</b><span>Only 7% of closed deals are lost. Teams often stop logging lost deals, so the model can&#x27;t learn what failure looks like. Aim for 15%+, or back-fill old lost deals.</span></div></li><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Predictive fields filled in</b><span>Key fields are 92% complete on closed deals on average; weakest is &#x27;industry&#x27; at 82%.</span></div></li><li class="req st-warn"><span class="ico">!</span>
+                 <div><b>Outcome labels standardised</b><span>3% of closed deals use a non-standard stage label (e.g. &#x27;Won&#x27;, &#x27;closed won&#x27;).</span></div></li><li class="req st-warn"><span class="ico">!</span>
+                 <div><b>No target leakage</b><span>&#x27;probability&#x27; (by value), &#x27;lost_reason&#x27; (by whether it is filled in) predict the outcome almost perfectly — a sign they are only filled in after a deal closes. They must be excluded from training or the model will look great in testing and fail on live deals.</span></div></li></ul>
+        </div>
+        <div class="uc card">
+          <div class="uc-head">
+            <div><h3>Churn prediction</h3><p class="q">Which customers are about to stop buying?</p></div>
+            <span class="pill v-warn">Almost ready</span>
+          </div>
+          <ul class="reqs"><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Enough customers</b><span>508 customers with at least one won deal. Aim for 300+.</span></div></li><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Repeat-purchase history</b><span>45% of customers have bought more than once. Churn is only definable for customers expected to come back.</span></div></li><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Long enough history</b><span>Won deals span 24 months. You need at least one full renewal/repurchase cycle; aim for 24.</span></div></li><li class="req st-warn"><span class="ico">!</span>
+                 <div><b>One record per customer</b><span>9% of contacts are duplicates. Duplicates split one customer&#x27;s history across records, which makes active customers look churned.</span></div></li><li class="req st-warn"><span class="ico">!</span>
+                 <div><b>Engagement signals logged</b><span>65% of contacts have any logged activity. Engagement drop-off is usually the strongest churn signal.</span></div></li></ul>
+        </div>
+        <div class="uc card">
+          <div class="uc-head">
+            <div><h3>Customer lifetime value</h3><p class="q">How much will each customer be worth over the next 12 months?</p></div>
+            <span class="pill v-warn">Almost ready</span>
+          </div>
+          <ul class="reqs"><li class="req st-warn"><span class="ico">!</span>
+                 <div><b>Revenue recorded on won deals</b><span>94% of won deals have a valid amount.</span></div></li><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Enough transaction history</b><span>Won deals span 24 months; BG/NBD-style models need 12+.</span></div></li><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Repeat buyers present</b><span>45% repeat buyers.</span></div></li><li class="req st-warn"><span class="ico">!</span>
+                 <div><b>Revenue linked to customers</b><span>2% of won deals point to a contact that doesn&#x27;t exist, so that revenue can&#x27;t be attributed.</span></div></li></ul>
+        </div>
+        <div class="uc card">
+          <div class="uc-head">
+            <div><h3>Sales forecasting</h3><p class="q">How much revenue will close next month/quarter?</p></div>
+            <span class="pill v-bad">Not ready</span>
+          </div>
+          <ul class="reqs"><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Closed deals with clean timelines</b><span>974 closed deals have a valid created → close timeline.</span></div></li><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Months of history</b><span>Closed deals cover 25 distinct months; seasonality needs 18+.</span></div></li><li class="req st-fail"><span class="ico">✕</span>
+                 <div><b>Pipeline is current</b><span>48% of open deals are already past their close date. A forecast built on a stale pipeline will be systematically too optimistic.</span></div></li><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Open deals have close dates</b><span>100% of open deals have an expected close date.</span></div></li></ul>
+        </div>
+        <div class="uc card">
+          <div class="uc-head">
+            <div><h3>AI sales assistant / agents</h3><p class="q">Can an AI agent draft follow-ups, prioritise reps&#x27; days, and update records?</p></div>
+            <span class="pill v-warn">Almost ready</span>
+          </div>
+          <ul class="reqs"><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Reachable contacts</b><span>91% of contacts have a valid email address.</span></div></li><li class="req st-warn"><span class="ico">!</span>
+                 <div><b>Interaction history for context</b><span>Only 55% of contacts have activity logged in the last 6 months — an agent drafting follow-ups would be working blind for the rest.</span></div></li><li class="req st-pass"><span class="ico">✓</span>
+                 <div><b>Clear ownership</b><span>96% of contacts have an owner the agent can route work to.</span></div></li><li class="req st-warn"><span class="ico">!</span>
+                 <div><b>No duplicate people</b><span>9% duplicates — an agent would message the same person twice.</span></div></li></ul>
+        </div></section>
+
+<h2>All checks</h2>
+<section class="card" style="padding:8px 12px; overflow-x:auto">
+<table><thead><tr><th>Dimension</th><th>Check</th><th style="text-align:right">Affected</th><th style="text-align:right">Rate</th><th style="text-align:right">Score</th></tr></thead>
+<tbody><tr><td>Completeness</td><td>Missing industry (contacts)</td><td class='num'>211 / 1,320</td><td class='num'>16.0%</td><td class='num'><span class='chip tone-warn'>68</span></td></tr><tr><td>Completeness</td><td>Missing amount (deals)</td><td class='num'>75 / 1,500</td><td class='num'>5.0%</td><td class='num'><span class='chip tone-fair'>80</span></td></tr><tr><td>Completeness</td><td>Missing email (contacts)</td><td class='num'>66 / 1,320</td><td class='num'>5.0%</td><td class='num'><span class='chip tone-fair'>83</span></td></tr><tr><td>Completeness</td><td>Missing lead source (contacts)</td><td class='num'>158 / 1,320</td><td class='num'>12.0%</td><td class='num'><span class='chip tone-fair'>76</span></td></tr><tr><td>Completeness</td><td>Missing phone (contacts)</td><td class='num'>119 / 1,320</td><td class='num'>9.0%</td><td class='num'><span class='chip tone-fair'>77</span></td></tr><tr><td>Completeness</td><td>Missing owner (contacts)</td><td class='num'>53 / 1,320</td><td class='num'>4.0%</td><td class='num'><span class='chip tone-fair'>84</span></td></tr><tr><td>Completeness</td><td>Missing job title (contacts)</td><td class='num'>132 / 1,320</td><td class='num'>10.0%</td><td class='num'><span class='chip tone-fair'>83</span></td></tr><tr><td>Completeness</td><td>Missing company (contacts)</td><td class='num'>0 / 1,320</td><td class='num'>0.0%</td><td class='num'><span class='chip tone-ok'>100</span></td></tr><tr><td>Completeness</td><td>Missing close date (deals)</td><td class='num'>0 / 1,500</td><td class='num'>0.0%</td><td class='num'><span class='chip tone-ok'>100</span></td></tr><tr><td>Completeness</td><td>Missing owner (deals)</td><td class='num'>0 / 1,500</td><td class='num'>0.0%</td><td class='num'><span class='chip tone-ok'>100</span></td></tr><tr><td>Consistency</td><td>Inconsistent industry labels (contacts)</td><td class='num'>90 / 1,109</td><td class='num'>8.1%</td><td class='num'><span class='chip tone-fair'>73</span></td></tr><tr><td>Consistency</td><td>Inconsistent city labels (contacts)</td><td class='num'>129 / 1,320</td><td class='num'>9.8%</td><td class='num'><span class='chip tone-warn'>67</span></td></tr><tr><td>Consistency</td><td>Inconsistent lead source labels (contacts)</td><td class='num'>87 / 1,162</td><td class='num'>7.5%</td><td class='num'><span class='chip tone-fair'>75</span></td></tr><tr><td>Consistency</td><td>Inconsistent country labels (contacts)</td><td class='num'>106 / 1,320</td><td class='num'>8.0%</td><td class='num'><span class='chip tone-fair'>73</span></td></tr><tr><td>Consistency</td><td>Inconsistent stage labels (deals)</td><td class='num'>35 / 1,500</td><td class='num'>2.3%</td><td class='num'><span class='chip tone-ok'>92</span></td></tr><tr><td>Consistency</td><td>Inconsistent lead source labels (deals)</td><td class='num'>0 / 1,500</td><td class='num'>0.0%</td><td class='num'><span class='chip tone-ok'>100</span></td></tr><tr><td>Freshness</td><td>Open deals past their close date</td><td class='num'>241 / 505</td><td class='num'>47.7%</td><td class='num'><span class='chip tone-bad'>20</span></td></tr><tr><td>Freshness</td><td>No logged activity in 6+ months</td><td class='num'>598 / 1,320</td><td class='num'>45.3%</td><td class='num'><span class='chip tone-bad'>43</span></td></tr><tr><td>Freshness</td><td>Contacts not updated in 12+ months</td><td class='num'>99 / 1,320</td><td class='num'>7.5%</td><td class='num'><span class='chip tone-ok'>85</span></td></tr><tr><td>Integrity</td><td>Won deals with no valid amount</td><td class='num'>58 / 922</td><td class='num'>6.3%</td><td class='num'><span class='chip tone-warn'>58</span></td></tr><tr><td>Integrity</td><td>Deals that close before they were created</td><td class='num'>30 / 1,500</td><td class='num'>2.0%</td><td class='num'><span class='chip tone-warn'>60</span></td></tr><tr><td>Integrity</td><td>Deals linked to a contact that doesn&#x27;t exist</td><td class='num'>30 / 1,500</td><td class='num'>2.0%</td><td class='num'><span class='chip tone-fair'>80</span></td></tr><tr><td>Integrity</td><td>Lost deals with no lost reason</td><td class='num'>0 / 73</td><td class='num'>0.0%</td><td class='num'><span class='chip tone-ok'>100</span></td></tr><tr><td>Uniqueness</td><td>Duplicate contacts</td><td class='num'>120 / 1,320</td><td class='num'>9.1%</td><td class='num'><span class='chip tone-warn'>64</span></td></tr><tr><td>Uniqueness</td><td>Repeated contact IDs</td><td class='num'>0 / 1,320</td><td class='num'>0.0%</td><td class='num'><span class='chip tone-ok'>100</span></td></tr><tr><td>Uniqueness</td><td>Repeated deal IDs</td><td class='num'>0 / 1,500</td><td class='num'>0.0%</td><td class='num'><span class='chip tone-ok'>100</span></td></tr><tr><td>Validity</td><td>Badly formatted emails</td><td class='num'>50 / 1,254</td><td class='num'>4.0%</td><td class='num'><span class='chip tone-fair'>73</span></td></tr><tr><td>Validity</td><td>Unusable phone numbers</td><td class='num'>36 / 1,201</td><td class='num'>3.0%</td><td class='num'><span class='chip tone-fair'>80</span></td></tr><tr><td>Validity</td><td>Zero or negative deal amounts</td><td class='num'>14 / 1,425</td><td class='num'>1.0%</td><td class='num'><span class='chip tone-fair'>80</span></td></tr><tr><td>Validity</td><td>Created dates in the future (contacts)</td><td class='num'>7 / 1,320</td><td class='num'>0.5%</td><td class='num'><span class='chip tone-fair'>73</span></td></tr><tr><td>Validity</td><td>Deal probability outside 0–100%</td><td class='num'>0 / 1,500</td><td class='num'>0.0%</td><td class='num'><span class='chip tone-ok'>100</span></td></tr><tr><td>Validity</td><td>Created dates in the future (deals)</td><td class='num'>0 / 1,500</td><td class='num'>0.0%</td><td class='num'><span class='chip tone-ok'>100</span></td></tr></tbody></table>
+</section>
+
+<h2>Method</h2>
+<section class="card method">
+  <p><b>Check score</b> = 100 × (1 − failure rate ÷ tolerance), floored at 0. <b>Dimension score</b> = weighted average of its checks.
+  <b>Overall score</b> = weighted average of dimensions (Completeness 25%, Uniqueness 20%, Validity, Consistency and Freshness 15% each, Integrity 10%).</p>
+  <p><b>Duplicates</b> are found by exact email match, matching phone digits, and fuzzy name matching within the same company
+  (company suffixes like “Pvt Ltd” ignored). <b>Inconsistent labels</b> are found by normalising case and punctuation, applying a
+  dictionary of known synonyms (Bombay → Mumbai, BFSI → Financial Services), and fuzzy-merging misspellings.
+  <b>Target leakage</b> is flagged when a single field separates won from lost deals ≥ 90% of the way from the majority-class baseline to perfect prediction.</p>
+  <p>A record-level list of every flagged row is provided alongside this report so each issue can be fixed at source.</p>
+</section>
+
+<footer>Generated by CRM Health Audit · scores are relative to the tolerances documented above and should be re-run monthly to track progress.</footer>
+</div></body></html>
