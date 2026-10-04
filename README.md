@@ -2,7 +2,7 @@
 
 **Upload a CRM export → get a 0–100 health score, the problems costing you the most, and a verdict on whether your data can support AI.**
 
-**▶ Live demo: coming soon** · **[Sample report](reports/sample/report.html)**
+**▶ [Live demo](https://crm-health-audit-iljdidmxfydlktfenfvz8n.streamlit.app/)** (sample data preloaded) · **[Sample report](reports/sample/report.html)**
 
 ![Report preview](docs/report_preview.png)
 
