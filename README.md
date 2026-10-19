@@ -67,7 +67,8 @@ python run_audit.py --contacts sample_data/contacts.csv --deals sample_data/deal
     --client "Sample D2C Brand" --as-of 2026-10-01 --truth sample_data/injected_issues.csv
 
 # 3. web app
-streamlit run app.py
+streamlit run app.py                 # public demo: sample data only
+streamlit run app.py -- --private    # private mode: upload real client exports (run locally only)
 
 # tests
 python -m pytest -q

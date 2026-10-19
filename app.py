@@ -1,9 +1,13 @@
-"""Streamlit front end:  streamlit run app.py
+"""Streamlit front end.
 
-Upload a contacts and/or deals export (or use the built-in messy sample), see the
-health score, top issues and AI-readiness, then download the full report.
+    streamlit run app.py                 # public demo: sample data only
+    streamlit run app.py -- --private    # private mode on your own machine: upload client exports
+
+The public demo never accepts uploads, so real customer data is only ever
+processed locally in private mode.
 """
 import json
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -13,23 +17,53 @@ from crm_audit.audit import run_audit
 from crm_audit.report import render_html
 
 SAMPLE = Path(__file__).parent / "sample_data"
+PRIVATE = "--private" in sys.argv[1:]
+CONTACT_EMAIL = "careermanjiri@gmail.com"
+LINKEDIN = "https://www.linkedin.com/in/manjirigajmal"
+MAILTO = (f"mailto:{CONTACT_EMAIL}?subject=CRM%20audit%20request"
+          "&body=Hi%20Manjiri%2C%20I%27d%20like%20an%20audit%20of%20our%20CRM%20data.")
 VERDICT_ICON = {"Ready": "🟢", "Almost ready": "🟡", "Not ready": "🔴", "Not assessed": "⚪"}
 STATUS_ICON = {"pass": "✅", "warn": "⚠️", "fail": "❌"}
 
 st.set_page_config(page_title="CRM Health Audit", page_icon="🩺", layout="wide")
 st.title("CRM Data Health & AI-Readiness Audit")
-st.caption("Upload a CRM export to get a 0–100 health score, the problems costing you the most, "
-           "and whether your data can support AI use cases.")
+st.caption("A 0–100 health score for CRM data, the problems costing the most, "
+           "and whether the data can support AI use cases.")
+
+
+def contact_box():
+    with st.container(border=True):
+        st.markdown("**Want an audit of your own CRM?**")
+        st.caption("Your data is audited privately on my machine, never on this public demo. "
+                   "Free for the first 5 businesses.")
+        st.link_button("✉️ Request an audit", MAILTO, width="stretch")
+        st.link_button("💼 Connect on LinkedIn", LINKEDIN, width="stretch")
+
 
 with st.sidebar:
     st.header("Data")
-    use_sample = st.toggle("Use the messy sample CRM", value=True)
     contacts_file = deals_file = None
-    if not use_sample:
-        contacts_file = st.file_uploader("Contacts export (.csv / .xlsx)", type=["csv", "xlsx"])
-        deals_file = st.file_uploader("Deals / opportunities export (.csv / .xlsx)", type=["csv", "xlsx"])
-    client = st.text_input("Client name for the report", "Sample D2C Brand" if use_sample else "My Company")
-    as_of = st.date_input("Audit date", pd.Timestamp("2026-10-01") if use_sample else pd.Timestamp.today())
+    if PRIVATE:
+        use_sample = st.toggle("Use the messy sample CRM", value=True)
+        if not use_sample:
+            contacts_file = st.file_uploader("Contacts export (.csv / .xlsx)", type=["csv", "xlsx"])
+            deals_file = st.file_uploader("Deals / opportunities export (.csv / .xlsx)", type=["csv", "xlsx"])
+        client = st.text_input("Client name for the report", "Sample D2C Brand" if use_sample else "My Company")
+        as_of = st.date_input("Audit date", pd.Timestamp("2026-10-01") if use_sample else pd.Timestamp.today())
+    else:
+        use_sample = True
+        client = "Sample D2C Brand"
+        as_of = pd.Timestamp("2026-10-01").date()
+        st.info("This public demo runs on a **sample CRM** (1,320 contacts, 1,500 deals) "
+                "with deliberately messy data.")
+    st.divider()
+    contact_box()
+
+if not PRIVATE:
+    a, b = st.columns([4, 1])
+    a.info("👋 You're viewing a demo on sample data. To audit your own CRM, request a private audit. "
+           "Your data never touches this public app.")
+    b.link_button("Request an audit", MAILTO, type="primary", width="stretch")
 
 if use_sample:
     contacts_file, deals_file = SAMPLE / "contacts.csv", SAMPLE / "deals.csv"
@@ -112,3 +146,14 @@ d2.download_button("🧾 Flagged records (CSV)", flag.to_csv(index=False), file_
                    mime="text/csv")
 d3.download_button("{ } Audit JSON", json.dumps(result.to_dict(), indent=2, default=str),
                    file_name="audit.json", mime="application/json")
+
+if not PRIVATE:
+    st.divider()
+    left, mid, right = st.columns([1, 2, 1])
+    with mid:
+        st.markdown("### Want this for your own CRM?")
+        st.write("Send me an export from HubSpot, Zoho, Salesforce, Pipedrive or Excel. I'll audit it privately "
+                 "and walk you through the results and fixes. **Free for the first 5 businesses.**")
+        c1, c2 = st.columns(2)
+        c1.link_button("✉️ Request an audit", MAILTO, type="primary", width="stretch")
+        c2.link_button("💼 Connect on LinkedIn", LINKEDIN, width="stretch")
